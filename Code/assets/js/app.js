@@ -1,6 +1,8 @@
 // @TODO: YOUR CODE HERE!
 function makeResponsive() {
 
+
+
     // if the SVG area isn't empty when the browser loads,
     // remove it and replace it with a resized version of the chart
   var svgArea = d3.select("body").select("svg");
@@ -24,6 +26,7 @@ var svgWidth = 960;
     left: 50
   };
 
+
 // setting svg (the scatter plot) area
   var chartHeight = svgHeight - margin.top - margin.bottom;
   var chartWidth = svgWidth - margin.left - margin.right;
@@ -35,16 +38,14 @@ var svgWidth = 960;
         .attr("height", svgHeight)
         .attr("width", svgWidth);
 
-console.log("Hello "); //as a check
+// Define the div for the tooltip
+var toolTip = d3.select("svg").append("div")	
+    .attr("class", "d3-tip");
 
 // RETRIEVE DATA FROM CSV FILE
 d3.csv("assets/data/data.csv").then(function(healthData) {
     // if (error) return error;
 
-
-console.log(" World "); // as a check
-console.log(healthData);
-   
 // convert strings to ints
 healthData.forEach(function(data) {
     data.poverty = +data.poverty;
@@ -52,27 +53,21 @@ healthData.forEach(function(data) {
   });
 
 
-console.log("Hello 1"); //as a check
-console.log(healthData);
-console.log(" World 1"); // as a check
 // CREATE PLOT
 // shift everything over by the margins
   var chartGroup = svg.append("g")
   .attr("transform", `translate(${margin.left}, ${margin.top})`);
 
-
  // draw scale for x axis
   var xScale = d3.scaleLinear()
-        .domain([d3.min(healthData, d =>d.poverty), d3.max(healthData, d => d.poverty)])
+        .domain(d3.extent(healthData, d => d.poverty))
         .range([0, chartWidth]);
         // .padding(0.1);
 
-
 // draw scale for y axis
   var yScale = d3.scaleLinear()
-  .domain([0, d3.max(healthData, d=>d.healthcare)])
+  .domain(d3.extent(healthData, d=>d.healthcare))
   .range([chartHeight, 0]);
-
 
 // create axes
 var xAxis = d3.axisBottom(xScale);
@@ -89,6 +84,23 @@ chartGroup
         .append("g")
         .call(yAxis);
 
+// x axis label
+chartGroup
+  .append("text")
+  .attr("x", chartWidth/2)
+  .attr("y", chartHeight + 35)
+  .text("% of Poverty");
+
+// y axis label
+chartGroup
+  .append("text")
+  .attr("transform", "rotate(-90)")
+  .attr("y", 0 - margin.left)
+  .attr("x", 0 - (chartHeight/2))
+  .attr("dy", "1em")
+  .text("% of Healthcare");
+
+
 // append circles
 chartGroup.selectAll("circle")
 .data(healthData)
@@ -97,11 +109,33 @@ chartGroup.selectAll("circle")
 .attr("cx", d => xScale(d.poverty))
 .attr("cy", d => yScale(d.healthcare))
 .attr("r", 10)
-.attr("fill", "blue")
-.attr("opacity", ".5");
-
+.attr("class", "stateCircle")
+.on("mouseover", function(d) {		
+  toolTip.style("display", "block")
+        .html(`<strong>${d.state}</strong><hr>${d.poverty}`);
+      // .style("left", (d3.event.pageX) + "px")		
+      // .style("top", (d3.event.pageY - 28) + "px");	
+  })					
+.on("mouseout", function() {		
+  toolTip.style("display", "none");	
 });
-}
+
+// append the text
+chartGroup.selectAll(".text")
+   .data(healthData)
+   .enter()
+   .append("text")
+   .attr("class", "stateText")
+   .text(d => d.abbr)
+   .attr("x", d => xScale(d.poverty))
+   .attr("y", d => yScale(d.healthcare))
+   .attr("font-size", "10px")
+   .attr("font-weight", "bold");
+
+chartGroup.call(toolTip);
+
+}); //closing for function reading csv
+} // closing for function makeResponsive
 
 makeResponsive();
 
