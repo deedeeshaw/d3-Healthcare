@@ -1,8 +1,7 @@
+
 // @TODO: YOUR CODE HERE!
 function makeResponsive() {
-
-
-
+  var chartDiv = document.getElementById("scatter");
     // if the SVG area isn't empty when the browser loads,
     // remove it and replace it with a resized version of the chart
   var svgArea = d3.select("body").select("svg");
@@ -12,11 +11,10 @@ function makeResponsive() {
   };
 
 // svg params
-// var svgHeight = window.innerHeight;
-// var svgWidth = window.innerWidth;
-
+// var svgHeight = chartDiv.clientHeight;
+var svgWidth = chartDiv.clientWidth;
 var svgHeight = 560;
-var svgWidth = 960;
+// var svgWidth = 760;
 
 // margins
   var margin = {
@@ -25,7 +23,6 @@ var svgWidth = 960;
     bottom: 50,
     left: 50
   };
-
 
 // setting svg (the scatter plot) area
   var chartHeight = svgHeight - margin.top - margin.bottom;
@@ -38,9 +35,14 @@ var svgWidth = 960;
         .attr("height", svgHeight)
         .attr("width", svgWidth);
 
-// Define the div for the tooltip
-var toolTip = d3.select("svg").append("div")	
-    .attr("class", "d3-tip");
+// Define tooltip
+var toolTip = d3.tip()
+.attr("class", "d3-tip")
+.offset([80, -60])
+.html(function(d) {
+  return (`<strong>${d.state}</strong><br>Poverty: ${d.poverty}%<br>Healthcare: ${d.healthcare}%`);
+});
+
 
 // RETRIEVE DATA FROM CSV FILE
 d3.csv("assets/data/data.csv").then(function(healthData) {
@@ -89,7 +91,7 @@ chartGroup
   .append("text")
   .attr("x", chartWidth/2)
   .attr("y", chartHeight + 35)
-  .text("% of Poverty");
+  .text("In Poverty (%)");
 
 // y axis label
 chartGroup
@@ -98,9 +100,9 @@ chartGroup
   .attr("y", 0 - margin.left)
   .attr("x", 0 - (chartHeight/2))
   .attr("dy", "1em")
-  .text("% of Healthcare");
+  .text("Lacks Healthcare (%)");
 
-
+  chartGroup.call(toolTip);
 // append circles
 chartGroup.selectAll("circle")
 .data(healthData)
@@ -110,14 +112,11 @@ chartGroup.selectAll("circle")
 .attr("cy", d => yScale(d.healthcare))
 .attr("r", 10)
 .attr("class", "stateCircle")
-.on("mouseover", function(d) {		
-  toolTip.style("display", "block")
-        .html(`<strong>${d.state}</strong><hr>${d.poverty}`);
-      // .style("left", (d3.event.pageX) + "px")		
-      // .style("top", (d3.event.pageY - 28) + "px");	
+.on("mouseover", function(d) {			
+  toolTip.show(d, this);
   })					
 .on("mouseout", function() {		
-  toolTip.style("display", "none");	
+  toolTip.hide(d);	
 });
 
 // append the text
